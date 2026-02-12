@@ -31,6 +31,46 @@
 $ npm install
 ```
 
+Copy `.env.example` to `.env` and adjust database credentials if needed.
+
+## Docker
+
+### Development (with hot reload)
+
+```bash
+$ npm run docker:dev
+# or with rebuild: npm run docker:dev:build
+```
+
+Starts PostgreSQL and the app with hot reload. Source code is mounted, so changes in `src/` trigger automatic reloads.
+
+### Production
+
+```bash
+$ npm run docker:prod
+```
+
+Starts PostgreSQL and the production build of the app.
+
+## Database (Drizzle ORM + PostgreSQL)
+
+- **Generate migrations:** `npm run db:generate`
+- **Run migrations:** `npm run db:migrate`
+- **Drizzle Studio (GUI):** `npm run db:studio`
+
+Inject the Drizzle instance in any service:
+
+```typescript
+import { Inject } from '@nestjs/common';
+import { DRIZZLE } from './db';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+
+@Injectable()
+export class MyService {
+  constructor(@Inject(DRIZZLE) private db: NodePgDatabase) {}
+}
+```
+
 ## Compile and run the project
 
 ```bash

@@ -1,6 +1,10 @@
 dist
 .git
 .env
+.env.*
+!.env.example
 *.log
 README.md
 .gitignore
+node_modules
+drizzle
