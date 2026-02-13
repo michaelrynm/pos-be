@@ -1,49 +1,17 @@
-# ========================================
-# Base Stage - Dependencies
-# ========================================
-FROM node:22-alpine AS base
+# DOCKERFILE FOR PRODUCTION
 
-WORKDIR /app
+FROM node:22-alpine AS builder
 
+WORKDIR /usr/src/app
+
+# Copy package.json and package-lock.json
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
-# ========================================
-# Development Stage - Hot Reload
-# ========================================
-FROM base AS development
-
-ENV NODE_ENV=development
-ENV NPM_CONFIG_LOGLEVEL=warn
-
-COPY . .
-
-EXPOSE 3000 9229
-
-CMD ["npm", "run", "start:dev"]
-
-# ========================================
-# Build Stage - For Production
-# ========================================
-FROM base AS build
-
+# Copy source code to /app
 COPY . .
 RUN npm run build
 
-# ========================================
-# Production Stage
-# ========================================
-FROM node:22-alpine AS production
+CMD ["npm", "run", "start:dev"]
 
-ENV NODE_ENV=production
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --omit=dev
-
-COPY --from=build /app/dist ./dist
-
-EXPOSE 3000
-
-CMD ["node", "dist/main.js"]
+#improve jadi multistage dengan nerapin node:20 AS runner

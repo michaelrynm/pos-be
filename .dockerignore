@@ -7,4 +7,5 @@ dist
 README.md
 .gitignore
 node_modules
-drizzle
+*.ts
+.dockerignore
