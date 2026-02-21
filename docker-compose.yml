@@ -1,84 +1,44 @@
 services:
-  pos-be-dev:
-    profiles:
-      - dev
-    build:
-      context: .
+  app:
+    build: #build docker image from Dockerfile
+      context: . #dockerfile path
       dockerfile: Dockerfile
-      target: development
-    container_name: pos-be-dev
+    container_name: pos-app
     ports:
-      - "${APP_PORT:-3000}:3000"
-      - "${DEBUG_PORT:-9229}:9229"
-    environment:
-      NODE_ENV: development
-      PORT: 3000
-      DATABASE_URL: postgres://${POSTGRES_USER:-pos}:${POSTGRES_PASSWORD:-pos_password}@db:5432/${POSTGRES_DB:-pos_db}
-    volumes:
-      - ./src:/app/src
-      - ./package.json:/app/package.json
-      - ./tsconfig.build.json:/app/tsconfig.build.json
-      - ./nest-cli.json:/app/nest-cli.json
-    depends_on:
-      db:
+      - 6111:6111
+    env_file:
+      - .env
+    depends_on: #wait for db-local before start app
+      db-local:
         condition: service_healthy
-    develop:
-      watch:
-        - action: sync
-          path: ./src
-          target: /app/src
-          ignore:
-            - "**/*.spec.ts"
-            - "**/__tests__/**"
-        - action: rebuild
-          path: ./package.json
-    restart: unless-stopped
+    restart: on-failure:3
     networks:
-      - pos-network
+      - shared_networks
 
-  pos-be-prod:
-    profiles:
-      - prod
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
-    container_name: pos-be-prod
-    ports:
-      - "${APP_PORT:-3000}:3000"
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      DATABASE_URL: postgres://${POSTGRES_USER:-pos}:${POSTGRES_PASSWORD:-pos_password}@db:5432/${POSTGRES_DB:-pos_db}
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - pos-network
-
-  db:
-    image: postgres:16-alpine
+  db-local:
     container_name: pos-db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-pos}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pos_password}
-      POSTGRES_DB: ${POSTGRES_DB:-pos_db}
+    image: postgres:latest
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - 5435:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=pos_app
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pos} -d ${POSTGRES_DB:-pos_db}"]
-      interval: 5s
-      timeout: 5s
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 1m30s
+      timeout: 30s
       retries: 5
+      start_period: 30s
     networks:
-      - pos-network
-
-networks:
-  pos-network:
-    driver: bridge
+      - shared_networks
 
 volumes:
-  postgres_data:
+  pgdata:
+
+networks:
+  shared_networks:
+    external: true #expose to localhost
+    driver: bridge #allow each services to interact
