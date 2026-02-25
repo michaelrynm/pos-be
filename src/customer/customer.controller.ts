@@ -1,6 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { CustomerService } from './customer.service';
-import { GetActiveProductResponseDto } from './dto';
+import { GetActiveProductResponseDto, GetCategoryTreeResponseDto } from './dto';
 
 @Controller('customer')
 export class CustomerController {
@@ -9,5 +9,17 @@ export class CustomerController {
   @Get()
   async getActiveProduct(): Promise<GetActiveProductResponseDto[]> {
     return await this.customerService.findActiveProducts();
+  }
+
+  @Get('search')
+  async search(
+    @Query('q') query: string,
+  ): Promise<GetActiveProductResponseDto[]> {
+    return await this.customerService.searchProducts(query);
+  }
+
+  @Get('/category')
+  async getCategoryTree(): Promise<GetCategoryTreeResponseDto[]> {
+    return await this.customerService.findCategoryTree();
   }
 }
