@@ -5,9 +5,10 @@ import { DrizzleModule } from './db/drizzle.module';
 import { CustomerModule } from './customer/customer.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from 'infrastructure/response.interceptor';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [DrizzleModule, CustomerModule],
+  imports: [DrizzleModule, CustomerModule, AuthModule],
   controllers: [AppController],
   providers: [
     AppService,
