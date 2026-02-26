@@ -41,7 +41,9 @@ describe('AuthService', () => {
 
   // ── Mock DB ───────────────────────────────────────────────────────────
   const mockInsertReturning = jest.fn();
-  const mockInsertValues = jest.fn().mockReturnValue({ returning: mockInsertReturning });
+  const mockInsertValues = jest
+    .fn()
+    .mockReturnValue({ returning: mockInsertReturning });
   const mockInsert = jest.fn().mockReturnValue({ values: mockInsertValues });
 
   const mockQueryUsersFindFirst = jest.fn();
@@ -203,7 +205,9 @@ describe('AuthService', () => {
     });
 
     it('should propagate unexpected database errors', async () => {
-      mockQueryUsersFindFirst.mockRejectedValue(new Error('DB connection lost'));
+      mockQueryUsersFindFirst.mockRejectedValue(
+        new Error('DB connection lost'),
+      );
 
       await expect(service.register(registerDto)).rejects.toThrow(
         'DB connection lost',
@@ -266,7 +270,7 @@ describe('AuthService', () => {
       mockQueryUsersFindFirst.mockResolvedValue(undefined);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        'Email or Password is wrong!',
+        'Username or Password is wrong!',
       );
     });
 
@@ -291,7 +295,7 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        'Email or Password is wrong!',
+        'Username or Password is wrong!',
       );
     });
 
@@ -304,7 +308,9 @@ describe('AuthService', () => {
     });
 
     it('should propagate unexpected database errors', async () => {
-      mockQueryUsersFindFirst.mockRejectedValue(new Error('Connection timeout'));
+      mockQueryUsersFindFirst.mockRejectedValue(
+        new Error('Connection timeout'),
+      );
 
       await expect(service.login(loginDto)).rejects.toThrow(
         'Connection timeout',

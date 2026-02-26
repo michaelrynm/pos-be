@@ -16,9 +16,9 @@ import { LoginDto } from './dto/login.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    private jwtService: JwtService,
+    private readonly jwtService: JwtService,
     @Inject(DRIZZLE)
-    private db: NodePgDatabase<typeof schema>,
+    private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -50,19 +50,19 @@ export class AuthService {
     return { message: 'Register successfuly', user };
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto): Promise<{ message: string; token: string }> {
     const user = await this.db.query.users.findFirst({
       where: eq(schema.users.username, dto.username),
     });
 
     if (!user) {
-      throw new UnauthorizedException('Email or Password is wrong!');
+      throw new UnauthorizedException('Username or Password is wrong!');
     }
 
     const isMatch = await bcrypt.compare(dto.password, user.password);
 
     if (!isMatch) {
-      throw new UnauthorizedException('Email or Password is wrong!');
+      throw new UnauthorizedException('Username or Password is wrong!');
     }
 
     const token = await this.jwtService.signAsync({
@@ -72,7 +72,7 @@ export class AuthService {
 
     return {
       message: 'Login successfuly',
-      token: token,
+      token,
     };
   }
 

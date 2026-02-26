@@ -15,6 +15,14 @@ describe('AuthController', () => {
     me: jest.fn(),
   };
 
+  // ── Mock Response ─────────────────────────────────────────────────────
+  const mockResponse = () => {
+    const res: any = {};
+    res.cookie = jest.fn().mockReturnValue(res);
+    res.clearCookie = jest.fn().mockReturnValue(res);
+    return res;
+  };
+
   // ── Module Setup ──────────────────────────────────────────────────────
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -99,35 +107,86 @@ describe('AuthController', () => {
     };
 
     it('should call authService.login with the correct DTO', async () => {
-      mockAuthService.login.mockResolvedValue({ message: 'ok', token: 'abc' });
+      const res = mockResponse();
+      mockAuthService.login.mockResolvedValue({
+        message: 'Login successfuly',
+        token: 'jwt-token-xyz',
+      });
 
-      await controller.login(loginDto);
+      await controller.login(loginDto, res);
 
       expect(authService.login).toHaveBeenCalledWith(loginDto);
       expect(authService.login).toHaveBeenCalledTimes(1);
     });
 
-    it('should return the result from authService.login', async () => {
-      const expectedResult = {
+    it('should set the access_token cookie with httpOnly flag', async () => {
+      const res = mockResponse();
+      mockAuthService.login.mockResolvedValue({
         message: 'Login successfuly',
         token: 'jwt-token-xyz',
-      };
+      });
 
-      mockAuthService.login.mockResolvedValue(expectedResult);
+      await controller.login(loginDto, res);
 
-      const result = await controller.login(loginDto);
+      expect(res.cookie).toHaveBeenCalledWith(
+        'access_token',
+        'jwt-token-xyz',
+        expect.objectContaining({
+          httpOnly: true,
+          sameSite: 'lax',
+        }),
+      );
+    });
 
-      expect(result).toEqual(expectedResult);
+    it('should return only the message without the token', async () => {
+      const res = mockResponse();
+      mockAuthService.login.mockResolvedValue({
+        message: 'Login successfuly',
+        token: 'jwt-token-xyz',
+      });
+
+      const result = await controller.login(loginDto, res);
+
+      expect(result).toEqual({ message: 'Login successfuly' });
+      expect(result).not.toHaveProperty('token');
     });
 
     it('should propagate errors thrown by authService.login', async () => {
+      const res = mockResponse();
       mockAuthService.login.mockRejectedValue(
-        new Error('Email or Password is wrong!'),
+        new Error('Username or Password is wrong!'),
       );
 
-      await expect(controller.login(loginDto)).rejects.toThrow(
-        'Email or Password is wrong!',
+      await expect(controller.login(loginDto, res)).rejects.toThrow(
+        'Username or Password is wrong!',
       );
+    });
+  });
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // logout()
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  describe('logout()', () => {
+    it('should clear the access_token cookie', () => {
+      const res = mockResponse();
+
+      controller.logout(res);
+
+      expect(res.clearCookie).toHaveBeenCalledWith(
+        'access_token',
+        expect.objectContaining({
+          httpOnly: true,
+          sameSite: 'lax',
+        }),
+      );
+    });
+
+    it('should return a success message', () => {
+      const res = mockResponse();
+
+      const result = controller.logout(res);
+
+      expect(result).toEqual({ message: 'Logged out successfully' });
     });
   });
 
