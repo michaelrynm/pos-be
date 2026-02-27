@@ -4,7 +4,7 @@ import { pgTable, timestamp, varchar, uuid } from 'drizzle-orm/pg-core';
 
 // Example table - extend as needed for your POS system
 export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
+  id: varchar('id').primaryKey(),
   name: varchar('name').notNull(),
   email: varchar('email').notNull(),
   username: varchar('username').notNull().unique(),
