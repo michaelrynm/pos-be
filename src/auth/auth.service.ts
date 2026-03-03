@@ -6,24 +6,28 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
-import { DRIZZLE } from 'db';
+import { DRIZZLE, users } from 'db';
 import * as schema from '../db';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { UuidService } from '../common/uuid.service';
+import { RegisterResponseDto } from './dto/register-response.dto';
+import { MeResponseDto } from './dto/me-response.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private jwtService: JwtService,
+    private readonly jwtService: JwtService,
     @Inject(DRIZZLE)
-    private db: NodePgDatabase<typeof schema>,
+    private readonly db: NodePgDatabase<typeof schema>,
+    private readonly uuidService: UuidService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto): Promise<RegisterResponseDto> {
     const existing = await this.db.query.users.findFirst({
-      where: eq(schema.users.username, dto.username),
+      where: eq(users.username, dto.username),
     });
 
     if (existing) {
@@ -33,36 +37,37 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const [user] = await this.db
-      .insert(schema.users)
+      .insert(users)
       .values({
+        id: this.uuidService.generate(),
         email: dto.email,
         name: dto.name,
         username: dto.username,
         password: hashedPassword,
       })
       .returning({
-        id: schema.users.id,
-        name: schema.users.name,
-        email: schema.users.email,
-        createdAt: schema.users.createdAt,
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        createdAt: users.createdAt,
       });
 
     return { message: 'Register successfuly', user };
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto): Promise<{ message: string; token: string }> {
     const user = await this.db.query.users.findFirst({
-      where: eq(schema.users.username, dto.username),
+      where: eq(users.username, dto.username),
     });
 
     if (!user) {
-      throw new UnauthorizedException('Email or Password is wrong!');
+      throw new UnauthorizedException('Username or Password is wrong!');
     }
 
     const isMatch = await bcrypt.compare(dto.password, user.password);
 
     if (!isMatch) {
-      throw new UnauthorizedException('Email or Password is wrong!');
+      throw new UnauthorizedException('Username or Password is wrong!');
     }
 
     const token = await this.jwtService.signAsync({
@@ -72,13 +77,13 @@ export class AuthService {
 
     return {
       message: 'Login successfuly',
-      token: token,
+      token,
     };
   }
 
-  async me(userId: string) {
+  async me(userId: string): Promise<MeResponseDto> {
     const user = await this.db.query.users.findFirst({
-      where: eq(schema.users.id, userId),
+      where: eq(users.id, userId),
     });
 
     if (!user) {

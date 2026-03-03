@@ -1,18 +1,20 @@
 import { JwtStrategy } from './jwt.strategy';
+import { ConfigService } from '@nestjs/config';
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
 
-  const originalEnv = process.env;
+  // ── Mock ConfigService ────────────────────────────────────────────────
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      if (key === 'JWT_SECRET') return 'test_secret_key';
+      return undefined;
+    }),
+  } as unknown as ConfigService;
 
   // ── Module Setup ──────────────────────────────────────────────────────
   beforeEach(() => {
-    process.env = { ...originalEnv, JWT_SECRET: 'test_secret_key' };
-    strategy = new JwtStrategy();
-  });
-
-  afterEach(() => {
-    process.env = originalEnv;
+    strategy = new JwtStrategy(mockConfigService);
   });
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -81,19 +83,17 @@ describe('JwtStrategy', () => {
   });
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // Fallback secret
+  // Constructor / ConfigService
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  describe('constructor / fallback secret', () => {
-    it('should instantiate without errors when JWT_SECRET env is set', () => {
-      process.env.JWT_SECRET = 'my_secret';
-      const strat = new JwtStrategy();
+  describe('constructor / ConfigService', () => {
+    it('should instantiate without errors when JWT_SECRET is provided via ConfigService', () => {
+      const strat = new JwtStrategy(mockConfigService);
       expect(strat).toBeDefined();
     });
 
-    it('should instantiate without errors when JWT_SECRET env is undefined (uses fallback)', () => {
-      delete process.env.JWT_SECRET;
-      const strat = new JwtStrategy();
-      expect(strat).toBeDefined();
+    it('should read JWT_SECRET from ConfigService', () => {
+      new JwtStrategy(mockConfigService);
+      expect(mockConfigService.get).toHaveBeenCalledWith('JWT_SECRET');
     });
   });
 });
