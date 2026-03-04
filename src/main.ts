@@ -14,6 +14,7 @@ async function bootstrap() {
     .setDescription('An API for working with POS Application.')
     .setVersion('1.0.0')
     .addBearerAuth()
+    .addServer('/api')
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
