@@ -33,6 +33,7 @@
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.2",
+    "@nestjs/mapped-types": "*",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.6",
@@ -96,9 +97,13 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
+    "transformIgnorePatterns": [
+      "node_modules/(?!uuid/)"
+    ],
     "moduleNameMapper": {
       "^db$": "<rootDir>/db",
-      "^db/(.*)$": "<rootDir>/db/$1"
+      "^db/(.*)$": "<rootDir>/db/$1",
+      "^auth/(.*)$": "<rootDir>/auth/$1"
     }
   }
 }

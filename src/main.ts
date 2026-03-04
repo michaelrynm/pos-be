@@ -20,6 +20,8 @@ async function bootstrap() {
 
   SwaggerModule.setup('docs', app, document);
 
+  app.setGlobalPrefix('api')
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
