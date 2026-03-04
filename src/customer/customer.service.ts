@@ -41,7 +41,9 @@ export class CustomerService {
     );
   }
 
-  async searchProducts(searchTerm: string) {
+  async searchProducts(
+    searchTerm: string,
+  ): Promise<GetActiveProductResponseDto[]> {
     const query = await this.db
       .select()
       .from(products)
